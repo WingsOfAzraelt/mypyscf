@@ -42,11 +42,11 @@ class BackendWorkflowTests(unittest.TestCase):
 
     def test_execute_request_uses_cached_langgraph_workflow_by_default(self):
         workflow = DummyWorkflow()
-        with mock.patch.object(backend, 'build_workflow', return_value=workflow) as build_workflow:
+        with mock.patch.object(backend, 'build_workflow', return_value=workflow) as mock_build_workflow:
             first = backend.execute_request('basis: sto-3g', channel='cli')
             second = backend.execute_request('basis: 6-31g', channel='web')
 
-        self.assertEqual(build_workflow.call_count, 1)
+        self.assertEqual(mock_build_workflow.call_count, 1)
         self.assertEqual(first['execution_status'], 'stubbed')
         self.assertEqual(second['execution_status'], 'stubbed')
         self.assertEqual(workflow.calls[0]['channel'], 'cli')
