@@ -42,6 +42,7 @@ repair_or_retry = backend.repair_or_retry
 result_analyst = backend.result_analyst
 result_extractor = backend.result_extractor
 run_workflow = backend.run_workflow
+run_workflow_sequential = backend.run_workflow_sequential
 runner = backend.runner
 spec_builder = backend.spec_builder
 spec_validator = backend.spec_validator

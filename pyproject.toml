@@ -51,6 +51,7 @@ Documentation = "http://www.pyscf.org"
 
 [project.optional-dependencies]
 
+agent = ["langgraph>=1.2.0"]
 forge = ["pyscf-forge"]
 geomopt = ["pyberny>=0.6.2", "geometric>=0.9.7.2", "pyscf-qsdopt"]
 doci = ["pyscf-doci"]

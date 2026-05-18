@@ -7,12 +7,13 @@ The backend keeps the existing workflow nodes and adds:
 1. A unified request entrypoint for CLI and web frontends
 2. Structured messages attached to the workflow state
 3. Structured logs for each major execution step
-4. Optional LangGraph graph construction when langgraph is installed
+4. LangGraph-backed orchestration for CLI and web execution
 '''
 
 from __future__ import annotations
 
 import copy
+import functools
 import inspect
 import io
 import json
@@ -719,7 +720,7 @@ def final_reporter(state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
-def run_workflow(initial_state: Dict[str, Any]) -> Dict[str, Any]:
+def run_workflow_sequential(initial_state: Dict[str, Any]) -> Dict[str, Any]:
     state = intent_parser(initial_state)
     state = spec_builder(state)
     state = spec_validator(state)
@@ -737,8 +738,23 @@ def run_workflow(initial_state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
-def execute_request(user_request: Any, *, channel: str = 'agent') -> Dict[str, Any]:
-    return run_workflow(default_state(user_request, channel=channel))
+@functools.lru_cache(maxsize=1)
+def get_workflow():
+    return build_workflow()
+
+
+def run_workflow(initial_state: Dict[str, Any], *, workflow: Any = None) -> Dict[str, Any]:
+    app = workflow or get_workflow()
+    return app.invoke(initial_state)
+
+
+def execute_request(
+    user_request: Any,
+    *,
+    channel: str = 'agent',
+    workflow: Any = None,
+) -> Dict[str, Any]:
+    return run_workflow(default_state(user_request, channel=channel), workflow=workflow)
 
 
 def build_workflow():
