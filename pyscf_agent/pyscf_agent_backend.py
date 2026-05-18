@@ -740,11 +740,20 @@ def run_workflow_sequential(initial_state: Dict[str, Any]) -> Dict[str, Any]:
 
 @functools.lru_cache(maxsize=1)
 def get_workflow():
-    '''Build and cache the compiled LangGraph workflow for repeated requests.'''
+    '''Build and cache the compiled LangGraph workflow for repeated requests.
+
+    The cache keeps a single compiled workflow instance and can be reset with
+    ``get_workflow.cache_clear()`` when tests or callers need a fresh graph.
+    '''
     return build_workflow()
 
 
 def run_workflow(initial_state: Dict[str, Any], *, workflow: Any = None) -> Dict[str, Any]:
+    '''Invoke the LangGraph workflow for the given state.
+
+    The optional ``workflow`` parameter allows tests to inject a stubbed
+    compiled graph while production callers use the cached default workflow.
+    '''
     workflow_instance = workflow or get_workflow()
     return workflow_instance.invoke(initial_state)
 
