@@ -9,6 +9,8 @@ from pyscf_agent import pyscf_agent_backend as backend
 
 
 class DummyWorkflow:
+    '''Minimal workflow stub used to verify LangGraph orchestration calls.'''
+
     def __init__(self):
         self.calls = []
 

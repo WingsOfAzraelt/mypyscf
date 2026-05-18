@@ -740,12 +740,13 @@ def run_workflow_sequential(initial_state: Dict[str, Any]) -> Dict[str, Any]:
 
 @functools.lru_cache(maxsize=1)
 def get_workflow():
+    '''Build and cache the compiled LangGraph workflow for repeated requests.'''
     return build_workflow()
 
 
 def run_workflow(initial_state: Dict[str, Any], *, workflow: Any = None) -> Dict[str, Any]:
-    app = workflow or get_workflow()
-    return app.invoke(initial_state)
+    workflow_instance = workflow or get_workflow()
+    return workflow_instance.invoke(initial_state)
 
 
 def execute_request(
