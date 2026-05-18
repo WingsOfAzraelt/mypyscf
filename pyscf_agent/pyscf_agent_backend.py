@@ -7,12 +7,13 @@ The backend keeps the existing workflow nodes and adds:
 1. A unified request entrypoint for CLI and web frontends
 2. Structured messages attached to the workflow state
 3. Structured logs for each major execution step
-4. Optional LangGraph graph construction when langgraph is installed
+4. LangGraph-backed orchestration for CLI and web execution
 '''
 
 from __future__ import annotations
 
 import copy
+import functools
 import inspect
 import io
 import json
@@ -719,7 +720,7 @@ def final_reporter(state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
-def run_workflow(initial_state: Dict[str, Any]) -> Dict[str, Any]:
+def run_workflow_sequential(initial_state: Dict[str, Any]) -> Dict[str, Any]:
     state = intent_parser(initial_state)
     state = spec_builder(state)
     state = spec_validator(state)
@@ -737,8 +738,33 @@ def run_workflow(initial_state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
-def execute_request(user_request: Any, *, channel: str = 'agent') -> Dict[str, Any]:
-    return run_workflow(default_state(user_request, channel=channel))
+@functools.lru_cache(maxsize=1)
+def get_workflow():
+    '''Build and cache the compiled LangGraph workflow for repeated requests.
+
+    The cache keeps a single compiled workflow instance and can be reset with
+    ``get_workflow.cache_clear()`` when tests or callers need a fresh graph.
+    '''
+    return build_workflow()
+
+
+def run_workflow(initial_state: Dict[str, Any], *, workflow: Any = None) -> Dict[str, Any]:
+    '''Invoke the LangGraph workflow for the given state.
+
+    The optional ``workflow`` parameter allows tests to inject a stubbed
+    compiled graph while production callers use the cached default workflow.
+    '''
+    workflow_instance = workflow or get_workflow()
+    return workflow_instance.invoke(initial_state)
+
+
+def execute_request(
+    user_request: Any,
+    *,
+    channel: str = 'agent',
+    workflow: Any = None,
+) -> Dict[str, Any]:
+    return run_workflow(default_state(user_request, channel=channel), workflow=workflow)
 
 
 def build_workflow():
